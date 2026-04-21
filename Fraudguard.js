@@ -17,18 +17,206 @@ const tabs = [
   { id: "seller", label: "Seller check", icon: "◎", desc: "Verify seller legitimacy", hint: "Paste seller profile, reviews, bio..." },
 ];
 
-const systemPrompts = {
-  image: `You are an expert AI image forensics analyst. Analyze images to determine if they are AI-generated. Look for: unnatural textures, geometric inconsistencies, watermarks or artifacts from AI tools (Midjourney, DALL-E, Stable Diffusion), overly smooth skin or hair, surreal lighting, impossible shadows, background distortions, facial feature asymmetries, hands with wrong number of fingers, text rendered incorrectly within the image, clothing/fabric that defies physics, repetitive background patterns. Respond ONLY in valid JSON with no extra text:
-{"verdict":"AI-GENERATED"|"LIKELY AI"|"UNCERTAIN"|"LIKELY REAL"|"AUTHENTIC","confidence":0-100,"riskScore":0-100,"signals":["array of specific signals found"],"summary":"2-3 sentence analysis"}`,
-
-  text: `You are an expert AI text detection specialist. Analyze text to determine if it was written by an AI or a human. Look for: uniform sentence length and structure, overly balanced paragraphs, absence of personal voice or lived experience, generic transitional phrases ("it's important to note", "in conclusion", "moreover"), unnaturally comprehensive coverage, absence of typos or colloquialisms, excessive hedging, repetitive patterns in sentence starters, lack of strong opinion, suspiciously perfect grammar. Respond ONLY in valid JSON with no extra text:
-{"verdict":"AI-WRITTEN"|"LIKELY AI"|"UNCERTAIN"|"LIKELY HUMAN"|"HUMAN-WRITTEN","confidence":0-100,"riskScore":0-100,"signals":["array of specific signals found"],"summary":"2-3 sentence analysis"}`,
-
-  product: `You are a fraud detection expert specializing in e-commerce. Analyze product listings for fraud signals. Look for: prices dramatically below market value, vague or plagiarized descriptions, stolen product images, missing brand or manufacturer info, keyword stuffing, implausible specifications, unrealistic delivery promises, no return policy, suspicious pricing patterns (ends in .99 across all items), generic stock photos, counterfeit brand signals, inconsistent currency/units, fake review language. Respond ONLY in valid JSON with no extra text:
-{"verdict":"FRAUDULENT"|"SUSPICIOUS"|"UNCERTAIN"|"LIKELY LEGIT"|"LEGITIMATE","confidence":0-100,"riskScore":0-100,"signals":["array of specific signals found"],"summary":"2-3 sentence analysis"}`,
-
-  seller: `You are a marketplace fraud analyst. Analyze seller profiles and information for legitimacy. Look for: very new accounts with high sales volume claims, vague business details, location inconsistencies, patterns matching known scam profiles, uniform 5-star reviews with generic praise, no negative feedback, recently created profiles, mismatched shipping origin and seller location, copy-pasted store descriptions, unrealistic guarantees, pressure tactics, no verifiable contact info, too-wide product range suggesting dropship scam, unusual response time claims. Respond ONLY in valid JSON with no extra text:
-{"verdict":"FRAUDULENT"|"SUSPICIOUS"|"UNCERTAIN"|"LIKELY LEGIT"|"LEGITIMATE","confidence":0-100,"riskScore":0-100,"signals":["array of specific signals found"],"summary":"2-3 sentence analysis"}`,
+// Mock analysis function - simulates AI detection without API
+const mockAnalyze = async (tab, inputText, imageFile = null) => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  // Generate deterministic but realistic results based on input
+  const inputLower = (inputText || "").toLowerCase();
+  const hasImage = !!imageFile;
+  
+  // Common signals library
+  const signalsLibrary = {
+    image: {
+      ai: ["Smooth texture gradients typical of diffusion models", "Minor geometric inconsistency in background elements", "Statistical pixel distribution anomalies", "Missing camera sensor noise patterns", "Perfect lighting without realistic light sources"],
+      real: ["Natural camera sensor noise pattern detected", "Consistent lighting and shadows", "Authentic depth of field", "Normal JPEG compression artifacts", "No AI-generation watermarks found"]
+    },
+    text: {
+      ai: ["Uniform sentence length distribution", "Missing personal anecdotes or lived experience", "Excessive use of transitional phrases", "No typos or casual language markers", "Overly balanced argument structure"],
+      human: ["Contains colloquial expressions", "Variable sentence structure", "Personal voice detected", "Natural flow with minor imperfections", "Context-specific knowledge gaps"]
+    },
+    product: {
+      fraud: ["Price 73% below market average", "Product description contains plagiarized content", "No return policy mentioned", "Suspiciously high discount without reason", "Seller has multiple identical listings"],
+      legit: ["Price within normal market range", "Detailed original description", "Clear return policy stated", "Consistent product specifications", "Verifiable brand information"]
+    },
+    seller: {
+      fraud: ["Account age: 12 days with 500+ sales claimed", "Location mismatch: 'US-based' but IP shows overseas", "Reviews follow copy-paste pattern", "No negative feedback visible", "Returns policy contradictory"],
+      legit: ["Account age consistent with sales volume", "Verified contact information provided", "Mixed review pattern (normal for real sellers)", "Clear business address listed", "Consistent response times"]
+    }
+  };
+  
+  // Determine verdict based on input patterns
+  let verdict, confidence, riskScore, signals, summary;
+  
+  // Check for suspicious keywords
+  const suspiciousTerms = {
+    image: ["midjourney", "dalle", "stable diffusion", "ai generated", "prompt"],
+    text: ["moreover", "furthermore", "in conclusion", "it is important to note", "on the other hand"],
+    product: ["too good to be true", "limited stock", "act fast", "unbelievable price", "miracle", "magic"],
+    seller: ["trust me", "guaranteed", "no questions asked", "private seller", "new account"]
+  };
+  
+  const legitTerms = {
+    image: ["canon", "nikon", "sony alpha", "iphone", "dslr", "raw photo"],
+    text: ["i feel", "in my experience", "honestly", "personally", "actually"],
+    product: ["original", "authentic", "manufacturer warranty", "genuine", "official"],
+    seller: ["verified", "business registered", "since 20", "customer service", "physical store"]
+  };
+  
+  const suspiciousCount = suspiciousTerms[tab]?.filter(term => inputLower.includes(term)).length || 0;
+  const legitCount = legitTerms[tab]?.filter(term => inputLower.includes(term)).length || 0;
+  
+  // Image-specific detection
+  if (tab === "image") {
+    if (hasImage) {
+      // Random but seeded by filename
+      const seed = imageFile.name.length + imageFile.size;
+      const isAILikely = seed % 3 === 0; // ~33% chance of AI detection for demo
+      
+      if (isAILikely) {
+        verdict = "AI-GENERATED";
+        confidence = Math.floor(75 + Math.random() * 20);
+        riskScore = Math.floor(70 + Math.random() * 25);
+        signals = signalsLibrary.image.ai.slice(0, 3 + Math.floor(Math.random() * 2));
+        summary = "This image shows multiple hallmarks of AI generation, including unnatural texture patterns and lighting inconsistencies. The statistical distribution of pixel correlations deviates from real camera-captured photos.";
+      } else {
+        verdict = "AUTHENTIC";
+        confidence = Math.floor(70 + Math.random() * 25);
+        riskScore = Math.floor(10 + Math.random() * 30);
+        signals = signalsLibrary.image.real.slice(0, 3 + Math.floor(Math.random() * 2));
+        summary = "This image appears to be authentic. Normal camera sensor noise patterns and consistent lighting suggest it was captured with a real camera rather than generated by AI.";
+      }
+    } else if (inputText) {
+      // URL-based detection
+      if (inputText.includes("placeholder") || inputText.includes("fake") || inputText.includes("generated")) {
+        verdict = "LIKELY AI";
+        confidence = 82;
+        riskScore = 78;
+        signals = ["URL pattern matches known AI image generation services", "Image hosting on AI-focused platforms", "No camera EXIF data available"];
+        summary = "The image source and URL pattern suggest this may be AI-generated. The hosting service is commonly used for AI artwork rather than authentic photography.";
+      } else {
+        verdict = "UNCERTAIN";
+        confidence = 55;
+        riskScore = 45;
+        signals = ["Unable to fully verify image source", "Limited metadata available", "Would benefit from direct file upload"];
+        summary = "Based on URL analysis alone, we cannot definitively determine if this image is AI-generated. Uploading the actual file would provide a more accurate assessment.";
+      }
+    } else {
+      verdict = "UNCERTAIN";
+      confidence = 50;
+      riskScore = 50;
+      signals = ["No image data provided to analyze"];
+      summary = "Please provide an image URL or upload a file for analysis.";
+    }
+  }
+  
+  // Text detection
+  else if (tab === "text") {
+    const wordCount = (inputText || "").split(/\s+/).length;
+    const hasAIPatterns = suspiciousCount > legitCount && suspiciousCount > 1;
+    const hasHumanPatterns = legitCount > suspiciousCount;
+    
+    if (wordCount < 20) {
+      verdict = "UNCERTAIN";
+      confidence = 40;
+      riskScore = 30;
+      signals = ["Text too short for reliable analysis", "Need at least 50-100 words for accurate detection"];
+      summary = "The provided text is too short to make a reliable determination. Please provide more content (at least 50-100 words) for better accuracy.";
+    } else if (hasAIPatterns) {
+      verdict = "AI-WRITTEN";
+      confidence = Math.floor(75 + Math.random() * 20);
+      riskScore = Math.floor(70 + Math.random() * 25);
+      signals = signalsLibrary.text.ai.slice(0, 4);
+      summary = "This text exhibits strong patterns consistent with AI language models, including uniform sentence structures, balanced paragraphs, and absence of personal voice or authentic human imperfections.";
+    } else if (hasHumanPatterns) {
+      verdict = "HUMAN-WRITTEN";
+      confidence = Math.floor(70 + Math.random() * 20);
+      riskScore = Math.floor(10 + Math.random() * 25);
+      signals = signalsLibrary.text.human.slice(0, 3);
+      summary = "This text shows characteristics of human writing, including variable sentence patterns, personal voice, and natural conversational elements that are difficult for current AI to replicate convincingly.";
+    } else {
+      // Neutral/mixed signals
+      const score = Math.random();
+      if (score > 0.6) {
+        verdict = "LIKELY AI";
+        confidence = 68;
+        riskScore = 72;
+        signals = signalsLibrary.text.ai.slice(0, 3);
+        summary = "Multiple linguistic patterns suggest this text may be AI-generated, though some human elements are present. The text appears overly polished and structured.";
+      } else {
+        verdict = "LIKELY HUMAN";
+        confidence = 65;
+        riskScore = 35;
+        signals = signalsLibrary.text.human.slice(0, 2);
+        summary = "This text shows signs of human authorship, including natural flow and contextual awareness, though some AI-like patterns were detected.";
+      }
+    }
+  }
+  
+  // Product detection
+  else if (tab === "product") {
+    const hasFraudSignals = suspiciousCount >= 2 || inputLower.includes("fake") || inputLower.includes("scam");
+    const hasLegitSignals = legitCount >= 2 || inputLower.includes("original") || inputLower.includes("warranty");
+    
+    if (hasFraudSignals && !hasLegitSignals) {
+      verdict = "FRAUDULENT";
+      confidence = Math.floor(80 + Math.random() * 15);
+      riskScore = Math.floor(85 + Math.random() * 15);
+      signals = signalsLibrary.product.fraud.slice(0, 4);
+      summary = "This product listing contains multiple red flags consistent with fraudulent listings, including suspicious pricing, plagiarized content, and missing policy information. Strongly advise against purchase.";
+    } else if (hasLegitSignals && !hasFraudSignals) {
+      verdict = "LEGITIMATE";
+      confidence = Math.floor(75 + Math.random() * 20);
+      riskScore = Math.floor(10 + Math.random() * 20);
+      signals = signalsLibrary.product.legit.slice(0, 3);
+      summary = "This product listing appears legitimate with normal pricing, original descriptions, and clear policies. Standard e-commerce precautions still apply.";
+    } else {
+      verdict = "SUSPICIOUS";
+      confidence = Math.floor(60 + Math.random() * 20);
+      riskScore = Math.floor(55 + Math.random() * 25);
+      signals = ["Price somewhat below market average", "Limited seller history available", "Returns policy unclear"];
+      summary = "This listing shows some concerning signals but not enough for a definitive fraud determination. Recommend additional verification before purchase.";
+    }
+  }
+  
+  // Seller detection
+  else {
+    const hasFraudSignals = suspiciousCount >= 2 || inputLower.includes("scam") || inputLower.includes("fake profile");
+    const hasLegitSignals = legitCount >= 2 || inputLower.includes("verified") || inputLower.includes("established");
+    
+    if (hasFraudSignals && !hasLegitSignals) {
+      verdict = "FRAUDULENT";
+      confidence = Math.floor(85 + Math.random() * 10);
+      riskScore = Math.floor(90 + Math.random() * 10);
+      signals = signalsLibrary.seller.fraud.slice(0, 4);
+      summary = "This seller profile exhibits multiple fraud indicators including account age inconsistencies, location mismatches, and suspicious review patterns. Strongly advise against transacting with this seller.";
+    } else if (hasLegitSignals && !hasFraudSignals) {
+      verdict = "LEGITIMATE";
+      confidence = Math.floor(80 + Math.random() * 15);
+      riskScore = Math.floor(5 + Math.random() * 15);
+      signals = signalsLibrary.seller.legit.slice(0, 3);
+      summary = "This seller profile appears legitimate with verified information, reasonable account history, and normal review patterns. Standard marketplace precautions still apply.";
+    } else {
+      verdict = "SUSPICIOUS";
+      confidence = Math.floor(55 + Math.random() * 20);
+      riskScore = Math.floor(50 + Math.random() * 25);
+      signals = ["Limited seller history", "Some missing verification details", "Recommend starting with small transaction"];
+      summary = "This seller profile shows some warning signs but requires more investigation. Consider testing with a small purchase or requesting additional verification before committing to large transactions.";
+    }
+  }
+  
+  // Ensure riskScore and confidence are within bounds
+  riskScore = Math.min(100, Math.max(0, riskScore));
+  confidence = Math.min(100, Math.max(0, confidence));
+  
+  return {
+    verdict,
+    confidence,
+    riskScore,
+    signals: signals || ["Analysis completed using pattern matching", "For production, connect to Claude API for deeper insights"],
+    summary: summary || "Analysis complete. For more accurate results with actual AI detection, integrate with Anthropic's Claude API using your API key."
+  };
 };
 
 const verdictStyle = (verdict) => {
@@ -81,56 +269,18 @@ export default function FraudGuard() {
     setResults((r) => ({ ...r, [tab]: null }));
 
     try {
-      let messages;
-
-      if (hasImageFile) {
-        const base64 = await new Promise((res, rej) => {
-          const reader = new FileReader();
-          reader.onload = (e) => res(e.target.result.split(",")[1]);
-          reader.onerror = () => rej(new Error("read failed"));
-          reader.readAsDataURL(imageFile);
-        });
-        messages = [
-          {
-            role: "user",
-            content: [
-              { type: "image", source: { type: "base64", media_type: imageFile.type, data: base64 } },
-              { type: "text", text: "Analyze this image for AI generation signals. Respond only in the JSON format specified in your system prompt." },
-            ],
-          },
-        ];
-      } else if (tab === "image" && inputVal.trim()) {
-        messages = [
-          {
-            role: "user",
-            content: [
-              { type: "image", source: { type: "url", url: inputVal.trim() } },
-              { type: "text", text: "Analyze this image for AI generation signals. Respond only in the JSON format specified in your system prompt." },
-            ],
-          },
-        ];
-      } else {
-        messages = [{ role: "user", content: inputVal }];
-      }
-
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: systemPrompts[tab],
-          messages,
-        }),
-      });
-
-      const data = await response.json();
-      const rawText = (data.content || []).map((c) => c.text || "").join("");
-      const clean = rawText.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
-      setResults((r) => ({ ...r, [tab]: parsed }));
-    } catch {
-      setResults((r) => ({ ...r, [tab]: { error: true, summary: "Analysis failed. Please check your input and try again." } }));
+      // Use mock analysis instead of API call
+      const result = await mockAnalyze(tab, inputVal, imageFile);
+      setResults((r) => ({ ...r, [tab]: result }));
+    } catch (error) {
+      console.error("Analysis error:", error);
+      setResults((r) => ({ 
+        ...r, 
+        [tab]: { 
+          error: true, 
+          summary: "Analysis failed. Please try again." 
+        } 
+      }));
     } finally {
       setLoading((l) => ({ ...l, [tab]: false }));
     }
@@ -143,13 +293,13 @@ export default function FraudGuard() {
 
   const placeholders = {
     image: "Paste image URL (https://example.com/photo.jpg)",
-    text: "Paste the text you want to analyze for AI generation...\n\nSupports: articles, captions, product descriptions, emails, social posts, academic work...",
-    product: "Paste the full product listing — title, description, price, specs, seller info, reviews...",
-    seller: "Paste seller profile — name, account age, ratings, reviews, bio, return policy, contact info...",
+    text: "Paste the text you want to analyze for AI generation...\n\nExample: 'Moreover, it is important to note that artificial intelligence has revolutionized many industries. In conclusion, the future looks promising.'",
+    product: "Paste the full product listing — title, description, price, specs, seller info, reviews...\n\nExample: 'Miracle Weight Loss Pill - 90% OFF! Limited stock! Act fast! No returns.'",
+    seller: "Paste seller profile — name, account age, ratings, reviews, bio, return policy, contact info...\n\nExample: 'New seller, 2 days old. 1000+ items sold. 5-star reviews only. Located in Nigeria but ships from US.'",
   };
 
   return (
-    <div style={{ fontFamily: "var(--font-sans)", maxWidth: 680, margin: "0 auto", padding: "0 0 2rem" }}>
+    <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", maxWidth: 680, margin: "0 auto", padding: "0 0 2rem" }}>
 
       {/* Header */}
       <div style={{ padding: "1.5rem 0 1.25rem", borderBottom: `2px solid ${PINK[400]}`, marginBottom: "1.25rem" }}>
@@ -171,7 +321,7 @@ export default function FraudGuard() {
           </div>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <h1 style={{ margin: 0, fontSize: 20, fontWeight: 500, color: "var(--color-text-primary)", letterSpacing: "-0.3px" }}>
+              <h1 style={{ margin: 0, fontSize: 20, fontWeight: 500, color: "#1A1A1A", letterSpacing: "-0.3px" }}>
                 Fraud<span style={{ color: PINK[400] }}>Guard</span>
               </h1>
               <span style={{
@@ -179,13 +329,27 @@ export default function FraudGuard() {
                 background: PINK[50], color: PINK[600],
                 padding: "2px 7px", borderRadius: 20,
                 border: `0.5px solid ${PINK[200]}`,
-              }}>AI-POWERED</span>
+              }}>DEMO MODE</span>
             </div>
-            <p style={{ margin: 0, fontSize: 12, color: "var(--color-text-secondary)" }}>
+            <p style={{ margin: 0, fontSize: 12, color: "#666666" }}>
               Detect AI content · fake products · fraudulent sellers
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Demo notice */}
+      <div style={{
+        background: PINK[50],
+        border: `0.5px solid ${PINK[200]}`,
+        borderRadius: 8,
+        padding: "8px 12px",
+        marginBottom: "1rem",
+        fontSize: 11,
+        color: PINK[600],
+        textAlign: "center"
+      }}>
+        🔍 DEMO MODE — Using simulated detection. Add your Anthropic API key for real AI-powered analysis.
       </div>
 
       {/* Tabs */}
@@ -196,10 +360,10 @@ export default function FraudGuard() {
             onClick={() => setActiveTab(t.id)}
             style={{
               padding: "7px 14px",
-              border: activeTab === t.id ? `1.5px solid ${PINK[400]}` : "0.5px solid var(--color-border-tertiary)",
-              borderRadius: "var(--border-radius-md)",
+              border: activeTab === t.id ? `1.5px solid ${PINK[400]}` : "0.5px solid #E5E5E5",
+              borderRadius: "8px",
               background: activeTab === t.id ? PINK[50] : "transparent",
-              color: activeTab === t.id ? PINK[600] : "var(--color-text-secondary)",
+              color: activeTab === t.id ? PINK[600] : "#666666",
               fontSize: 13,
               fontWeight: activeTab === t.id ? 500 : 400,
               cursor: "pointer",
@@ -215,19 +379,19 @@ export default function FraudGuard() {
 
       {/* Input panel */}
       <div style={{
-        background: "var(--color-background-primary)",
-        border: "0.5px solid var(--color-border-tertiary)",
-        borderRadius: "var(--border-radius-lg)",
+        background: "#FFFFFF",
+        border: "0.5px solid #E5E5E5",
+        borderRadius: "12px",
         overflow: "hidden",
         marginBottom: "1rem",
       }}>
         <div style={{
           padding: "10px 14px",
-          borderBottom: "0.5px solid var(--color-border-tertiary)",
-          background: "var(--color-background-secondary)",
+          borderBottom: "0.5px solid #E5E5E5",
+          background: "#F9F9F9",
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
-          <span style={{ fontSize: 12, color: "var(--color-text-secondary)", fontWeight: 500 }}>
+          <span style={{ fontSize: 12, color: "#666666", fontWeight: 500 }}>
             {tab.icon} {tab.desc}
           </span>
           {activeTab === "image" && (
@@ -236,7 +400,7 @@ export default function FraudGuard() {
               style={{
                 padding: "4px 10px", fontSize: 11, fontWeight: 500,
                 border: `0.5px solid ${PINK[300]}`,
-                borderRadius: "var(--border-radius-md)",
+                borderRadius: "6px",
                 background: PINK[50], color: PINK[600], cursor: "pointer",
               }}
             >
@@ -248,19 +412,19 @@ export default function FraudGuard() {
 
         {/* Image preview */}
         {activeTab === "image" && imagePreview && (
-          <div style={{ padding: "10px 14px", borderBottom: "0.5px solid var(--color-border-tertiary)", display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ padding: "10px 14px", borderBottom: "0.5px solid #E5E5E5", display: "flex", alignItems: "center", gap: 10 }}>
             <img
               src={imagePreview}
               alt="Preview"
-              style={{ height: 60, width: 60, objectFit: "cover", borderRadius: "var(--border-radius-md)", border: `0.5px solid ${PINK[200]}` }}
+              style={{ height: 60, width: 60, objectFit: "cover", borderRadius: "6px", border: `0.5px solid ${PINK[200]}` }}
             />
             <div>
-              <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-primary)", fontWeight: 500 }}>{imageFile?.name}</p>
-              <p style={{ margin: 0, fontSize: 11, color: "var(--color-text-tertiary)" }}>{(imageFile?.size / 1024).toFixed(0)} KB</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#1A1A1A", fontWeight: 500 }}>{imageFile?.name}</p>
+              <p style={{ margin: 0, fontSize: 11, color: "#999999" }}>{(imageFile?.size / 1024).toFixed(0)} KB</p>
             </div>
             <button
               onClick={clearImage}
-              style={{ marginLeft: "auto", fontSize: 11, color: "var(--color-text-tertiary)", border: "none", background: "none", cursor: "pointer", padding: "4px 8px" }}
+              style={{ marginLeft: "auto", fontSize: 11, color: "#999999", border: "none", background: "none", cursor: "pointer", padding: "4px 8px" }}
             >
               Remove
             </button>
@@ -283,9 +447,9 @@ export default function FraudGuard() {
             outline: "none",
             resize: "vertical",
             fontSize: 13,
-            fontFamily: "var(--font-sans)",
+            fontFamily: "system-ui, -apple-system, sans-serif",
             background: "transparent",
-            color: "var(--color-text-primary)",
+            color: "#1A1A1A",
             boxSizing: "border-box",
             lineHeight: 1.6,
           }}
@@ -293,19 +457,19 @@ export default function FraudGuard() {
 
         <div style={{
           padding: "10px 14px",
-          borderTop: "0.5px solid var(--color-border-tertiary)",
+          borderTop: "0.5px solid #E5E5E5",
           display: "flex", justifyContent: "space-between", alignItems: "center",
         }}>
-          <span style={{ fontSize: 11, color: "var(--color-text-tertiary)" }}>{tab.hint}</span>
+          <span style={{ fontSize: 11, color: "#999999" }}>{tab.hint}</span>
           <button
             onClick={() => analyze(activeTab)}
             disabled={isLoading || !canAnalyze}
             style={{
               padding: "8px 18px",
-              background: isLoading || !canAnalyze ? "var(--color-background-secondary)" : PINK[400],
-              color: isLoading || !canAnalyze ? "var(--color-text-tertiary)" : "white",
+              background: isLoading || !canAnalyze ? "#F0F0F0" : PINK[400],
+              color: isLoading || !canAnalyze ? "#999999" : "white",
               border: "none",
-              borderRadius: "var(--border-radius-md)",
+              borderRadius: "6px",
               fontSize: 13,
               fontWeight: 500,
               cursor: isLoading || !canAnalyze ? "default" : "pointer",
@@ -324,7 +488,7 @@ export default function FraudGuard() {
           padding: "1.5rem",
           background: PINK[50],
           border: `0.5px solid ${PINK[200]}`,
-          borderRadius: "var(--border-radius-lg)",
+          borderRadius: "12px",
           textAlign: "center",
         }}>
           <div style={{ fontSize: 11, fontWeight: 500, letterSpacing: 1, color: PINK[600], marginBottom: 6 }}>ANALYZING</div>
@@ -335,9 +499,9 @@ export default function FraudGuard() {
       {/* Result */}
       {result && !isLoading && (
         <div style={{
-          background: "var(--color-background-primary)",
-          border: "0.5px solid var(--color-border-tertiary)",
-          borderRadius: "var(--border-radius-lg)",
+          background: "#FFFFFF",
+          border: "0.5px solid #E5E5E5",
+          borderRadius: "12px",
           overflow: "hidden",
         }}>
           {result.error ? (
@@ -347,8 +511,8 @@ export default function FraudGuard() {
               {/* Verdict + risk */}
               <div style={{
                 padding: "1rem 1.25rem",
-                borderBottom: "0.5px solid var(--color-border-tertiary)",
-                background: "var(--color-background-secondary)",
+                borderBottom: "0.5px solid #E5E5E5",
+                background: "#F9F9F9",
                 display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12,
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -363,13 +527,13 @@ export default function FraudGuard() {
                   }}>
                     {result.verdict}
                   </span>
-                  <span style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>
+                  <span style={{ fontSize: 12, color: "#666666" }}>
                     {result.confidence}% confidence
                   </span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: 0.8, color: "var(--color-text-tertiary)" }}>RISK SCORE</span>
-                  <div style={{ width: 80, height: 5, background: "var(--color-border-tertiary)", borderRadius: 3, overflow: "hidden" }}>
+                  <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: 0.8, color: "#999999" }}>RISK SCORE</span>
+                  <div style={{ width: 80, height: 5, background: "#E5E5E5", borderRadius: 3, overflow: "hidden" }}>
                     <div style={{
                       height: "100%",
                       width: `${result.riskScore}%`,
@@ -387,8 +551,8 @@ export default function FraudGuard() {
               </div>
 
               {/* Summary */}
-              <div style={{ padding: "1rem 1.25rem", borderBottom: "0.5px solid var(--color-border-tertiary)" }}>
-                <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-primary)", lineHeight: 1.7 }}>
+              <div style={{ padding: "1rem 1.25rem", borderBottom: "0.5px solid #E5E5E5" }}>
+                <p style={{ margin: 0, fontSize: 13, color: "#1A1A1A", lineHeight: 1.7 }}>
                   {result.summary}
                 </p>
               </div>
@@ -396,14 +560,14 @@ export default function FraudGuard() {
               {/* Signals */}
               {result.signals && result.signals.length > 0 && (
                 <div style={{ padding: "1rem 1.25rem" }}>
-                  <p style={{ margin: "0 0 10px", fontSize: 10, fontWeight: 500, letterSpacing: 1, color: "var(--color-text-tertiary)" }}>
+                  <p style={{ margin: "0 0 10px", fontSize: 10, fontWeight: 500, letterSpacing: 1, color: "#999999" }}>
                     DETECTED SIGNALS
                   </p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                     {result.signals.map((signal, i) => (
                       <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                         <span style={{ color: PINK[400], fontSize: 8, marginTop: 5, flexShrink: 0 }}>◆</span>
-                        <span style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.5 }}>
+                        <span style={{ fontSize: 13, color: "#666666", lineHeight: 1.5 }}>
                           {signal}
                         </span>
                       </div>
@@ -429,7 +593,7 @@ export default function FraudGuard() {
           }}>
             {tab.icon}
           </div>
-          <p style={{ margin: 0, fontSize: 13, color: "var(--color-text-tertiary)" }}>{tab.hint}</p>
+          <p style={{ margin: 0, fontSize: 13, color: "#999999" }}>{tab.hint}</p>
         </div>
       )}
 
