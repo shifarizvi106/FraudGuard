@@ -410,4 +410,28 @@ const FraudGuard = () => {
                                     <div className="signals-list">
                                         {result.signals.map((signal, i) => (
                                             <div key={i} className="signal-item">
-                                                <span className
+                                                <span className="signal-bullet">◆</span>
+                                                <span className="signal-text">{signal}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+            )}
+
+            {/* Empty State */}
+            {!result && !isLoading && (
+                <div className="empty-state">
+                    <div className="empty-icon">{currentTab.icon}</div>
+                    <p className="empty-hint">{currentTab.hint}</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// Render the app
+ReactDOM.createRoot(document.getElementById("root")).render(<FraudGuard />);
