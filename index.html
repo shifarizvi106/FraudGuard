@@ -1,810 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FraudGuard</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --pink-50: #FBEAF0;
-    --pink-100: #F4C0D1;
-    --pink-200: #ED93B1;
-    --pink-300: #E07098;
-    --pink-400: #D4537E;
-    --pink-600: #993556;
-    --pink-800: #72243E;
-    --bg: #fff;
-    --bg2: #f9f6f7;
-    --bg3: #f2eef0;
-    --text: #1a1118;
-    --text2: #5c4a52;
-    --text3: #9c8591;
-    --border: rgba(180,120,150,0.18);
-    --border2: rgba(180,120,150,0.35);
-    --radius: 10px;
-    --radius-lg: 14px;
-    --safe-bg: #EAF3DE; --safe-text: #3B6D11;
-    --warn-bg: #FAEEDA; --warn-text: #854F0B;
-    --danger-bg: #FCEBEB; --danger-text: #A32D2D;
-    --grey-bg: #F1EFE8; --grey-text: #5F5E5A;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1a0f14; --bg2: #221318; --bg3: #2c1820;
-      --text: #f5e8ed; --text2: #c49aaf; --text3: #8a6070;
-      --border: rgba(212,83,126,0.15); --border2: rgba(212,83,126,0.3);
-    }
-  }
-
-  body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 0;
-  }
-
-  /* Layout */
-  .shell {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 2rem 1.25rem 3rem;
-  }
-
-  /* Header */
-  .header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding-bottom: 1.25rem;
-    border-bottom: 2px solid var(--pink-400);
-    margin-bottom: 1.5rem;
-  }
-  .logo-circle {
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    background: var(--pink-400);
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .logo-circle svg { width: 18px; height: 18px; }
-  .header-text h1 {
-    font-size: 21px; font-weight: 600; letter-spacing: -0.4px;
-    color: var(--text);
-  }
-  .header-text h1 span { color: var(--pink-400); }
-  .header-text p { font-size: 12px; color: var(--text3); margin-top: 2px; }
-
-  /* Tabs */
-  .tabs {
-    display: flex; gap: 6px; flex-wrap: wrap;
-    margin-bottom: 1.25rem;
-  }
-  .tab-btn {
-    padding: 7px 14px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: transparent;
-    color: var(--text2);
-    font-size: 13px; font-weight: 400;
-    cursor: pointer;
-    transition: all 0.12s;
-    display: flex; align-items: center; gap: 5px;
-  }
-  .tab-btn:hover { border-color: var(--border2); color: var(--text); }
-  .tab-btn.active {
-    border: 1.5px solid var(--pink-400);
-    background: var(--pink-50);
-    color: var(--pink-600);
-    font-weight: 500;
-  }
-  .tab-icon { font-size: 12px; }
-
-  /* Panel */
-  .panel {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    margin-bottom: 1rem;
-  }
-  .panel-header {
-    padding: 10px 14px;
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 8px;
-  }
-  .panel-label { font-size: 12px; color: var(--text2); font-weight: 500; }
-
-  /* Upload button */
-  .upload-btn {
-    padding: 4px 10px;
-    font-size: 11px; font-weight: 500;
-    border: 1px solid var(--pink-300);
-    border-radius: var(--radius);
-    background: var(--pink-50);
-    color: var(--pink-600);
-    cursor: pointer;
-    transition: background 0.1s;
-  }
-  .upload-btn:hover { background: var(--pink-100); }
-
-  /* Image preview */
-  .img-preview {
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 10px;
-  }
-  .img-thumb {
-    width: 58px; height: 58px; object-fit: cover;
-    border-radius: 8px;
-    border: 1px solid var(--pink-200);
-  }
-  .img-info p:first-child { font-size: 13px; font-weight: 500; color: var(--text); }
-  .img-info p:last-child { font-size: 11px; color: var(--text3); margin-top: 2px; }
-  .remove-btn {
-    margin-left: auto;
-    font-size: 11px; color: var(--text3);
-    border: none; background: none; cursor: pointer; padding: 4px 6px;
-  }
-  .remove-btn:hover { color: var(--text2); }
-
-  /* Textarea */
-  textarea {
-    width: 100%; border: none; outline: none;
-    resize: vertical; min-height: 110px;
-    padding: 12px 14px;
-    font-size: 13px; line-height: 1.65;
-    font-family: inherit;
-    background: var(--bg); color: var(--text);
-    display: block;
-  }
-  textarea::placeholder { color: var(--text3); }
-  textarea:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  /* Panel footer */
-  .panel-footer {
-    padding: 10px 14px;
-    border-top: 1px solid var(--border);
-    background: var(--bg2);
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  }
-  .hint { font-size: 11px; color: var(--text3); }
-
-  /* Analyze button */
-  .analyze-btn {
-    padding: 8px 20px;
-    border: none; border-radius: var(--radius);
-    font-size: 13px; font-weight: 500;
-    cursor: pointer; transition: all 0.12s;
-    min-width: 110px;
-    background: var(--pink-400); color: #fff;
-  }
-  .analyze-btn:hover:not(:disabled) { background: var(--pink-600); }
-  .analyze-btn:disabled {
-    background: var(--bg3); color: var(--text3); cursor: default;
-  }
-
-  /* Loading */
-  .loading-box {
-    padding: 1.5rem;
-    background: var(--pink-50);
-    border: 1px solid var(--pink-100);
-    border-radius: var(--radius-lg);
-    text-align: center;
-    display: none;
-  }
-  .loading-box.visible { display: block; }
-  .loading-label {
-    font-size: 10px; font-weight: 600; letter-spacing: 1px;
-    color: var(--pink-600); margin-bottom: 6px;
-  }
-  .loading-msg { font-size: 13px; color: var(--pink-800); }
-  .dot-blink { animation: blink 1.2s infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-
-  /* Result card */
-  .result-card {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    display: none;
-  }
-  .result-card.visible { display: block; }
-
-  .result-top {
-    padding: 1rem 1.25rem;
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 10px;
-  }
-  .verdict-row { display: flex; align-items: center; gap: 10px; }
-  .verdict-badge {
-    padding: 4px 12px; border-radius: 20px;
-    font-size: 11px; font-weight: 600; letter-spacing: 0.6px;
-  }
-  .conf-text { font-size: 12px; color: var(--text2); }
-
-  .risk-row { display: flex; align-items: center; gap: 8px; }
-  .risk-label { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; color: var(--text3); }
-  .risk-bar-wrap {
-    width: 90px; height: 5px;
-    background: var(--bg3); border-radius: 3px; overflow: hidden;
-  }
-  .risk-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
-  .risk-pct { font-size: 13px; font-weight: 600; min-width: 34px; }
-
-  /* Result body */
-  .result-summary {
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .result-summary p { font-size: 13px; color: var(--text); line-height: 1.7; }
-
-  .result-signals { padding: 1rem 1.25rem; }
-  .signals-label {
-    font-size: 10px; font-weight: 600; letter-spacing: 1px;
-    color: var(--text3); margin-bottom: 10px;
-  }
-  .signal-item {
-    display: flex; align-items: flex-start; gap: 8px;
-    margin-bottom: 7px;
-  }
-  .signal-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--pink-400); margin-top: 5px; flex-shrink: 0;
-  }
-  .signal-text { font-size: 13px; color: var(--text2); line-height: 1.5; }
-
-  /* Severity bands */
-  .result-bands {
-    padding: 0 1.25rem 1.25rem;
-    display: flex; gap: 8px; flex-wrap: wrap;
-  }
-  .band {
-    font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500;
-  }
-  .band.critical { background: #FCEBEB; color: #A32D2D; }
-  .band.high { background: #FAEEDA; color: #854F0B; }
-  .band.medium { background: #E6F1FB; color: #185FA5; }
-  .band.low { background: #EAF3DE; color: #3B6D11; }
-
-  /* Error state */
-  .error-box {
-    padding: 1rem 1.25rem;
-    background: #FCEBEB; border: 1px solid #F09595;
-    border-radius: var(--radius-lg);
-    font-size: 13px; color: #A32D2D;
-    display: none;
-  }
-  .error-box.visible { display: block; }
-
-  /* Empty state */
-  .empty-state {
-    text-align: center; padding: 2rem 1rem;
-  }
-  .empty-icon {
-    width: 52px; height: 52px; border-radius: 50%;
-    background: var(--pink-50); border: 1px solid var(--pink-100);
-    margin: 0 auto 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px; color: var(--pink-300);
-  }
-  .empty-hint { font-size: 13px; color: var(--text3); }
-
-  /* Verdict colours */
-  .v-danger { background: #FCEBEB; color: #A32D2D; }
-  .v-warn   { background: #FAEEDA; color: #854F0B; }
-  .v-grey   { background: #F1EFE8; color: #5F5E5A; }
-  .v-safe   { background: #EAF3DE; color: #3B6D11; }
-
-  .risk-danger { color: #A32D2D; }
-  .risk-warn   { color: #854F0B; }
-  .risk-safe   { color: #3B6D11; }
-  .risk-bar-danger { background: #E24B4A; }
-  .risk-bar-warn   { background: #EF9F27; }
-  .risk-bar-safe   { background: #639922; }
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FraudGuard</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 <div class="shell">
 
-  <!-- Header -->
+  <!-- header -->
   <div class="header">
-    <div class="logo-circle">
-      <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="9" cy="9" r="3.5" fill="white"/>
-        <circle cx="9" cy="9" r="7.5" stroke="white" stroke-width="1.1" fill="none"/>
-        <line x1="9" y1="1" x2="9" y2="3.5" stroke="white" stroke-width="1.2"/>
-        <line x1="9" y1="14.5" x2="9" y2="17" stroke="white" stroke-width="1.2"/>
-        <line x1="1" y1="9" x2="3.5" y2="9" stroke="white" stroke-width="1.2"/>
-        <line x1="14.5" y1="9" x2="17" y2="9" stroke="white" stroke-width="1.2"/>
+    <div class="logo">
+      <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="10" cy="10" r="3.8" fill="white"/>
+        <circle cx="10" cy="10" r="8.2" stroke="white" stroke-width="1.2" fill="none"/>
+        <line x1="10" y1="1" x2="10" y2="4" stroke="white" stroke-width="1.4"/>
+        <line x1="10" y1="16" x2="10" y2="19" stroke="white" stroke-width="1.4"/>
+        <line x1="1" y1="10" x2="4" y2="10" stroke="white" stroke-width="1.4"/>
+        <line x1="16" y1="10" x2="19" y2="10" stroke="white" stroke-width="1.4"/>
       </svg>
     </div>
-    <div class="header-text">
-      <h1>Fraud<span>Guard</span></h1>
-      <p>AI content · fake products · fraudulent sellers</p>
+    <div class="htext">
+      <h1>Fraud<em>Guard</em></h1>
+      <p>AI content &middot; fake products &middot; fraudulent sellers</p>
     </div>
   </div>
 
-  <!-- Tabs -->
+  <!-- tabs -->
   <div class="tabs">
-    <button class="tab-btn active" data-tab="image">
-      <span class="tab-icon">◈</span> Image scan
-    </button>
-    <button class="tab-btn" data-tab="text">
-      <span class="tab-icon">❋</span> Text scan
-    </button>
-    <button class="tab-btn" data-tab="product">
-      <span class="tab-icon">◉</span> Product check
-    </button>
-    <button class="tab-btn" data-tab="seller">
-      <span class="tab-icon">◎</span> Seller check
-    </button>
+    <button class="tab on" data-tab="image"><i>◈</i> Image scan</button>
+    <button class="tab" data-tab="text"><i>❋</i> Text scan</button>
+    <button class="tab" data-tab="product"><i>◉</i> Product check</button>
+    <button class="tab" data-tab="seller"><i>◎</i> Seller check</button>
   </div>
 
-  <!-- Input panel -->
+  <!-- input panel -->
   <div class="panel">
-    <div class="panel-header">
-      <span class="panel-label" id="panel-label">◈ Detect AI-generated images</span>
-      <button class="upload-btn" id="upload-btn" onclick="document.getElementById('file-input').click()">Upload image</button>
-      <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFile(this)"/>
+    <div class="phead">
+      <span class="plabel" id="plabel">◈ Detect AI-generated images</span>
+      <button class="upbtn" id="upbtn" onclick="document.getElementById('fi').click()">Upload image</button>
+      <input type="file" id="fi" accept="image/*" style="display:none"/>
     </div>
 
-    <div class="img-preview" id="img-preview" style="display:none">
-      <img class="img-thumb" id="img-thumb" src="" alt="preview"/>
-      <div class="img-info">
-        <p id="img-name">—</p>
-        <p id="img-size">—</p>
+    <div class="preview" id="prev">
+      <img class="thumb" id="thumb" src="" alt=""/>
+      <div class="pinfo">
+        <p id="fname">—</p>
+        <p id="fsize">—</p>
       </div>
-      <button class="remove-btn" onclick="clearImage()">Remove</button>
+      <button class="rmbtn" onclick="clearImg()">Remove</button>
     </div>
 
-    <textarea id="input-area" rows="5" placeholder="Paste image URL (e.g. https://example.com/photo.jpg)"></textarea>
+    <textarea id="ta" placeholder="Paste an image URL — e.g. https://example.com/photo.jpg"></textarea>
 
-    <div class="panel-footer">
-      <span class="hint" id="panel-hint">Paste a URL or upload a file</span>
-      <button class="analyze-btn" id="analyze-btn" onclick="analyze()" disabled>Analyze →</button>
+    <div class="pfoot">
+      <span class="hint" id="hint">Paste a public URL or upload a file</span>
+      <button class="abtn" id="abtn" onclick="doAnalyze()" disabled>Analyze →</button>
     </div>
   </div>
 
-  <!-- Loading -->
-  <div class="loading-box" id="loading-box">
-    <div class="loading-label">SCANNING</div>
-    <div class="loading-msg">Scanning for fraud signals<span class="dot-blink">...</span></div>
+  <!-- loading -->
+  <div class="loading" id="loading" style="display:none">
+    <div class="llabel">SCANNING</div>
+    <div class="lmsg">Looking for fraud signals<span class="dots">...</span></div>
   </div>
 
-  <!-- Error -->
-  <div class="error-box" id="error-box"></div>
+  <!-- error -->
+  <div class="errbox" id="errbox" style="display:none"></div>
 
-  <!-- Result -->
-  <div class="result-card" id="result-card">
-    <div class="result-top">
-      <div class="verdict-row">
-        <span class="verdict-badge" id="r-verdict">—</span>
-        <span class="conf-text" id="r-conf">—</span>
+  <!-- result -->
+  <div class="result" id="result" style="display:none">
+    <div class="rtop">
+      <div class="vrow">
+        <span class="badge vg" id="rv">—</span>
+        <span class="conf" id="rconf">—</span>
       </div>
-      <div class="risk-row">
-        <span class="risk-label">RISK</span>
-        <div class="risk-bar-wrap">
-          <div class="risk-bar-fill" id="r-bar" style="width:0%"></div>
-        </div>
-        <span class="risk-pct" id="r-pct">0%</span>
+      <div class="riskrow">
+        <span class="risklbl">RISK</span>
+        <div class="risktrack"><div class="riskfill rf-safe" id="rbar" style="width:0%"></div></div>
+        <span class="riskpct rp-safe" id="rpct">0%</span>
       </div>
     </div>
-    <div class="result-summary"><p id="r-summary"></p></div>
-    <div class="result-signals">
-      <div class="signals-label">DETECTED SIGNALS</div>
-      <div id="r-signals"></div>
+    <div class="rsummary" id="rsumm"></div>
+    <div class="rsigs">
+      <div class="siglabel">DETECTED SIGNALS</div>
+      <div id="rsigs-list"></div>
     </div>
-    <div class="result-bands" id="r-bands"></div>
+    <div class="rbands" id="rbands"></div>
   </div>
 
-  <!-- Empty state -->
-  <div class="empty-state" id="empty-state">
-    <div class="empty-icon" id="empty-icon">◈</div>
-    <p class="empty-hint" id="empty-hint">Upload an image or paste a URL to begin</p>
+  <!-- empty -->
+  <div class="empty" id="empty">
+    <div class="eicon" id="eicon">◈</div>
+    <p class="ehint" id="ehint">Drop an image URL or upload a file to start</p>
   </div>
 
 </div>
-
-<script>
-const TABS = {
-  image: {
-    label: "◈ Detect AI-generated images",
-    placeholder: "Paste image URL (e.g. https://example.com/photo.jpg)",
-    hint: "Upload a file or paste a public image URL",
-    icon: "◈",
-    emptyHint: "Upload an image or paste a URL to begin",
-    showUpload: true,
-    system: `You are a forensic AI image authenticity analyst trained on the latest AI image generation research. Your job is to determine with maximum strictness whether an image is AI-generated or real. You must check for ALL of the following signals:
-
-STRUCTURAL SIGNALS:
-- Unnatural or impossibly smooth skin texture
-- Inconsistent lighting direction or multiple conflicting light sources
-- Background objects with distorted, warped, or impossible geometry
-- Hands with wrong number of fingers, fused fingers, or anatomically incorrect knuckles
-- Eyes that are asymmetric, too reflective, or contain iris patterns that repeat
-- Hair strands that merge unnaturally or have plastic-like quality
-- Teeth that are too perfect, too uniform, or slightly misaligned in impossible ways
-- Fabric folds that defy gravity or physics
-- Text within the image that is illegible, morphed, or nonsensical
-- Ears that are malformed or asymmetric beyond natural variation
-- Jewelry or accessories that partially merge with skin
-
-GENERATIVE ARTEFACTS:
-- Telltale Midjourney bokeh (overly smooth circular blur)
-- DALL-E characteristic flat color banding in gradients
-- Stable Diffusion over-sharpening and chromatic aberration at edges
-- Runway Gen or Sora temporal smearing on still frames
-- Repeated texture tiles in backgrounds
-- Objects with no depth of field inconsistency (everything sharp)
-- Impossible reflection accuracy in eyes or surfaces
-- Watermarks: "mj", "DALL-E", "Firefly", "SD", "AI-generated"
-
-SEMANTIC SIGNALS:
-- Context that would be very rare or impossible to photograph
-- Hyperrealistic perfection beyond what camera sensors capture
-- Faces that are slightly too symmetrical
-- Scenes composed with aesthetic precision typical of prompt-based generation
-
-Rate STRICTLY. If you detect even 2-3 signals, lean toward "LIKELY AI" or "AI-GENERATED". 
-
-Respond ONLY as valid JSON, no prose, no markdown:
-{"verdict":"AI-GENERATED"|"LIKELY AI"|"UNCERTAIN"|"LIKELY REAL"|"AUTHENTIC","confidence":0-100,"riskScore":0-100,"signals":["list of specific observed signals — be precise, not generic"],"summary":"2-3 sentences citing the most compelling evidence"}`
-  },
-  text: {
-    label: "❋ Detect AI-written content",
-    placeholder: "Paste the text you want to scan...\n\nWorks on: articles, captions, product descriptions, emails, academic writing, social posts...",
-    hint: "Paste any block of text for AI authorship detection",
-    icon: "❋",
-    emptyHint: "Paste any text to check if it was written by AI",
-    showUpload: false,
-    system: `You are a strict AI text detection expert with training equivalent to GPTZero, Originality.ai, and academic plagiarism detectors combined. Your task is to detect whether text was written by an LLM (GPT-4, Claude, Gemini, Llama, Mistral, etc.) or a human. Apply ALL the following checks with maximum strictness:
-
-PERPLEXITY ANALYSIS:
-- Low perplexity: predictable word choices at each step (AI stays in safe, central probability territory)
-- High burstiness variance in humans: sentence length swings wildly; AI is more uniform
-- Humans use idioms, regional expressions, sudden tense changes, abrupt topic pivots
-- AI almost never makes typos, autocorrect artifacts, or punctuation errors from haste
-
-AI FINGERPRINT PATTERNS — look for ANY of these:
-- Opening sentences that broadly set context: "In today's world...", "When it comes to...", "It is important to..."
-- Phrase stacks: three adjectives or examples always grouped in threes: "fast, efficient, and reliable"
-- Transition clichés: "Moreover,", "Furthermore,", "In conclusion,", "It's worth noting that"
-- Balanced paragraph structure: intro sentence, 3 body points, conclusion sentence — repeated
-- Excessive hedging without personal stakes: "may", "might", "could", "it's possible that"
-- Generic examples that feel like they were chosen from a textbook
-- Perfect grammar with zero personality — no contractions in casual contexts
-- Lists with exactly 3-5 points that feel interchangeable
-- No self-contradiction, emotional shift, or moment of genuine uncertainty
-- Absence of cultural reference, slang, personal anecdote, or specific lived experience
-- The text covers a topic comprehensively and evenly — no strong opinions held
-- Bullet lists where prose would be more natural for a human writer
-
-CONTEXTUAL SIGNALS:
-- Text is about a topic LLMs are frequently prompted on (productivity, health, AI, marketing, relationships)
-- Length is suspiciously ideal for the format requested
-- The vocabulary is correct but slightly formal for the context
-
-Rate STRICTLY. If you see 3+ signals, lean toward AI. Respond ONLY as valid JSON, no prose, no markdown:
-{"verdict":"AI-WRITTEN"|"LIKELY AI"|"UNCERTAIN"|"LIKELY HUMAN"|"HUMAN-WRITTEN","confidence":0-100,"riskScore":0-100,"signals":["specific phrase examples or patterns you observed — quote short excerpts where possible"],"summary":"2-3 sentences citing the strongest evidence"}`
-  },
-  product: {
-    label: "◉ Check product listing for fraud",
-    placeholder: "Paste the full product listing here — title, description, price, specs, reviews, seller info...",
-    hint: "Include as much of the listing as possible for accuracy",
-    icon: "◉",
-    emptyHint: "Paste a product listing to check for fraud signals",
-    showUpload: false,
-    system: `You are an elite e-commerce fraud investigator trained by consumer protection agencies and major marketplaces (Amazon, eBay, Etsy, Shopify). You detect counterfeit goods, scam listings, and deceptive sellers with maximum precision. Apply ALL checks:
-
-PRICING SIGNALS:
-- Price more than 40% below known market value for the product category
-- Artificially anchored "original price" crossed out with fake discount
-- Suspiciously round or suspiciously specific pricing (e.g. $0.99 or $999.97)
-- Free shipping on heavy items from overseas (red flag for drop-shipping scam)
-
-LISTING QUALITY SIGNALS:
-- Description copied verbatim from manufacturer website or another listing
-- Grammar errors consistent with non-native speaker or machine translation
-- Vague specifications: "high quality material", "fast delivery", no actual measurements
-- Conflicting information within the listing (model numbers, specs)
-- Stock images from other brands or third-party suppliers
-- Product category mismatches (selling luxury goods with no provenance)
-- Brand name misspelling by one character (Adiddas, Appple, Nyke)
-- "Inspired by", "replica", or "style of" language buried in description
-
-REVIEW SIGNALS (if provided):
-- All reviews 5-star with generic praise: "Great product! Fast shipping!"
-- Cluster of reviews posted same day or same week
-- Reviewers with 0 other reviews or account ages under 30 days
-- Review text doesn't match product type (reviewing a charger but describing a shirt)
-- No critical reviews whatsoever on a product with hundreds of ratings
-
-SELLER SIGNALS:
-- Seller registered less than 6 months ago with hundreds of sales
-- No physical address, phone number, or verifiable business registration
-- Returns policy nonexistent or "all sales final" without explanation
-- Payment only via wire transfer, cryptocurrency, or gift cards
-- Seller claims "direct from factory" or "wholesale only" with no minimum order
-
-COMPLIANCE RED FLAGS:
-- Missing safety certifications (CE, FCC, UL) for electrical products
-- No age rating on children's toys
-- Pharmaceuticals or supplements sold without license information
-- Counterfeit detection: if luxury brand, check for authentication indicators
-
-Rate STRICTLY. Respond ONLY as valid JSON, no prose, no markdown:
-{"verdict":"FRAUDULENT"|"SUSPICIOUS"|"UNCERTAIN"|"LIKELY LEGIT"|"LEGITIMATE","confidence":0-100,"riskScore":0-100,"signals":["specific evidence from the listing text — quote where possible"],"summary":"2-3 sentences naming the most critical red flags or legitimacy indicators"}`
-  },
-  seller: {
-    label: "◎ Verify seller legitimacy",
-    placeholder: "Paste seller profile info — name, bio, account age, ratings, reviews, return policy, store description, contact details...",
-    hint: "Include seller bio, reviews, policies and any other available info",
-    icon: "◎",
-    emptyHint: "Paste a seller profile to check for fraud patterns",
-    showUpload: false,
-    system: `You are a marketplace trust & safety analyst at the level of Amazon's Seller Integrity team or eBay's Trust & Safety division. Your job is to identify fraudulent, deceptive, or high-risk sellers with maximum strictness. Apply ALL checks:
-
-ACCOUNT LEGITIMACY:
-- Account creation date vs number of sales (new account, many sales = red flag)
-- Seller location inconsistent with product origin (seller says UK, shipping from China)
-- Profile photo or store banner appears AI-generated or stock-photo
-- Business name that is generic, slightly misspelled, or clones a known brand
-- Contact email uses free provider (gmail, yahoo) despite claiming to be a business
-- No verifiable business registration, VAT number, or physical address
-
-REVIEW PATTERN ANALYSIS (most important signals):
-- Review velocity spike: 50+ reviews in a week on a new account
-- Review homogeneity: all reviews use similar sentence patterns or identical phrasing
-- All positive reviews, zero negative or 1-2 star reviews across hundreds of transactions
-- Reviewers with no review history elsewhere or accounts created the same period as reviews
-- Reviews mention different products than what the seller currently lists
-- Generic praise: "Great seller!", "Fast shipping!", "Highly recommend!" with no product specifics
-- Reviews posted in unnatural bursts (10 per day for 5 days, then nothing)
-
-PRODUCT RANGE RED FLAGS:
-- Unusually wide product range (electronics, clothing, food, toys all from one account)
-- Products change frequently — today electronics, last month handbags (dropship rotation)
-- Luxury or high-value goods with no authentication documentation offered
-- Sole-source for products with impossible uniqueness claims
-
-POLICY & COMMUNICATION RED FLAGS:
-- Return policy is vague, non-existent, or heavily penalizes the buyer
-- Shipping estimates are unrealistically fast for the claimed origin country
-- Seller demands payment outside of platform escrow
-- Urgency language: "Limited stock!", "Offer expires today!" without explanation
-- Seller messages proactively offering discounts to remove negative reviews
-
-TRUST SIGNALS TO LOOK FOR (legitimacy indicators):
-- Verifiable business address and phone number
-- Clear, specific return/refund policy
-- Consistent product niche over time
-- Mix of positive and critical reviews with detailed seller responses
-- Third-party verification badges (eBay Top Rated, Amazon Choice, etc.)
-
-Rate STRICTLY. Respond ONLY as valid JSON, no prose, no markdown:
-{"verdict":"FRAUDULENT"|"SUSPICIOUS"|"UNCERTAIN"|"LIKELY LEGIT"|"LEGITIMATE","confidence":0-100,"riskScore":0-100,"signals":["specific evidence from the profile text — quote where possible"],"summary":"2-3 sentences citing the strongest trust or fraud signals"}`
-  }
-};
-
-let activeTab = "image";
-let imageFile = null;
-let imagePreview = null;
-
-function switchTab(tab) {
-  activeTab = tab;
-  imageFile = null;
-  imagePreview = null;
-
-  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-  document.querySelector(`[data-tab="${tab}"]`).classList.add("active");
-
-  const cfg = TABS[tab];
-  document.getElementById("panel-label").textContent = cfg.label;
-  document.getElementById("input-area").placeholder = cfg.placeholder;
-  document.getElementById("panel-hint").textContent = cfg.hint;
-  document.getElementById("upload-btn").style.display = cfg.showUpload ? "" : "none";
-  document.getElementById("img-preview").style.display = "none";
-  document.getElementById("input-area").disabled = false;
-  document.getElementById("input-area").value = "";
-  document.getElementById("empty-icon").textContent = cfg.icon;
-  document.getElementById("empty-hint").textContent = cfg.emptyHint;
-
-  hide("loading-box"); hide("result-card"); hide("error-box");
-  show("empty-state");
-  updateAnalyzeBtn();
-}
-
-document.querySelectorAll(".tab-btn").forEach(btn => {
-  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
-});
-
-document.getElementById("input-area").addEventListener("input", function() {
-  if (activeTab === "image" && this.value.trim()) clearImage(false);
-  updateAnalyzeBtn();
-});
-
-function updateAnalyzeBtn() {
-  const hasText = document.getElementById("input-area").value.trim().length > 0;
-  const btn = document.getElementById("analyze-btn");
-  btn.disabled = !(hasText || imageFile);
-}
-
-function handleFile(input) {
-  const file = input.files[0];
-  if (!file) return;
-  imageFile = file;
-
-  const url = URL.createObjectURL(file);
-  imagePreview = url;
-  document.getElementById("img-thumb").src = url;
-  document.getElementById("img-name").textContent = file.name;
-  document.getElementById("img-size").textContent = (file.size / 1024).toFixed(0) + " KB";
-  document.getElementById("img-preview").style.display = "flex";
-  document.getElementById("input-area").disabled = true;
-  document.getElementById("input-area").value = "";
-  updateAnalyzeBtn();
-}
-
-function clearImage(clearInput = true) {
-  imageFile = null;
-  imagePreview = null;
-  document.getElementById("img-preview").style.display = "none";
-  document.getElementById("img-thumb").src = "";
-  document.getElementById("file-input").value = "";
-  document.getElementById("input-area").disabled = false;
-  if (clearInput) document.getElementById("input-area").value = "";
-  updateAnalyzeBtn();
-}
-
-function show(id) { document.getElementById(id).style.display = ""; }
-function hide(id) { document.getElementById(id).style.display = "none"; }
-function showClass(id, cls) { const el = document.getElementById(id); el.classList.add(cls); }
-
-async function analyze() {
-  const cfg = TABS[activeTab];
-  const textVal = document.getElementById("input-area").value.trim();
-
-  hide("empty-state");
-  hide("result-card");
-  hide("error-box");
-  show("loading-box");
-  document.getElementById("loading-box").classList.add("visible");
-  document.getElementById("analyze-btn").disabled = true;
-
-  try {
-    let messages;
-
-    if (activeTab === "image" && imageFile) {
-      const b64 = await toBase64(imageFile);
-      messages = [{
-        role: "user",
-        content: [
-          { type: "image", source: { type: "base64", media_type: imageFile.type, data: b64 }},
-          { type: "text", text: "Analyze this image with maximum strictness for AI generation artifacts. Return only the JSON." }
-        ]
-      }];
-    } else if (activeTab === "image" && textVal) {
-      messages = [{
-        role: "user",
-        content: [
-          { type: "image", source: { type: "url", url: textVal }},
-          { type: "text", text: "Analyze this image with maximum strictness for AI generation artifacts. Return only the JSON." }
-        ]
-      }];
-    } else {
-      messages = [{ role: "user", content: textVal }];
-    }
-
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1200,
-        system: cfg.system,
-        messages
-      })
-    });
-
-    const data = await res.json();
-    const raw = (data.content || []).map(c => c.text || "").join("");
-    const clean = raw.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(clean);
-
-    renderResult(parsed);
-
-  } catch (e) {
-    hide("loading-box");
-    const eb = document.getElementById("error-box");
-    eb.textContent = "Analysis failed — please check your input and try again. If you used a URL, ensure it is publicly accessible.";
-    eb.classList.add("visible");
-    show("error-box");
-  } finally {
-    document.getElementById("analyze-btn").disabled = false;
-    updateAnalyzeBtn();
-  }
-}
-
-function renderResult(r) {
-  hide("loading-box");
-  document.getElementById("loading-box").classList.remove("visible");
-
-  // Verdict badge
-  const verdict = (r.verdict || "UNKNOWN").toUpperCase();
-  const vEl = document.getElementById("r-verdict");
-  vEl.textContent = verdict;
-  vEl.className = "verdict-badge " + verdictClass(verdict);
-
-  // Confidence
-  document.getElementById("r-conf").textContent = `${r.confidence ?? "—"}% confidence`;
-
-  // Risk bar
-  const score = r.riskScore ?? 0;
-  const bar = document.getElementById("r-bar");
-  const pct = document.getElementById("r-pct");
-  bar.style.width = score + "%";
-  bar.className = "risk-bar-fill " + riskBarClass(score);
-  pct.textContent = score + "%";
-  pct.className = "risk-pct " + riskTextClass(score);
-
-  // Summary
-  document.getElementById("r-summary").textContent = r.summary || "No summary available.";
-
-  // Signals
-  const sigEl = document.getElementById("r-signals");
-  sigEl.innerHTML = "";
-  (r.signals || []).forEach(s => {
-    sigEl.innerHTML += `<div class="signal-item"><div class="signal-dot"></div><span class="signal-text">${s}</span></div>`;
-  });
-
-  // Severity bands
-  const bandsEl = document.getElementById("r-bands");
-  bandsEl.innerHTML = "";
-  const bucket = riskBucket(score);
-  bandsEl.innerHTML = `<span class="band ${bucket}">${bucket.toUpperCase()} RISK — ${score}/100</span>`;
-
-  show("result-card");
-  document.getElementById("result-card").classList.add("visible");
-}
-
-function verdictClass(v) {
-  if (v.includes("FRAUD") || v.includes("AI-WRITTEN") || v.includes("AI-GENERATED")) return "v-danger";
-  if (v.includes("SUSPICIOUS") || v.includes("LIKELY AI")) return "v-warn";
-  if (v.includes("UNCERTAIN")) return "v-grey";
-  return "v-safe";
-}
-function riskBucket(s) {
-  if (s >= 80) return "critical";
-  if (s >= 60) return "high";
-  if (s >= 35) return "medium";
-  return "low";
-}
-function riskBarClass(s) {
-  if (s >= 65) return "risk-bar-danger";
-  if (s >= 40) return "risk-bar-warn";
-  return "risk-bar-safe";
-}
-function riskTextClass(s) {
-  if (s >= 65) return "risk-danger";
-  if (s >= 40) return "risk-warn";
-  return "risk-safe";
-}
-
-function toBase64(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = e => res(e.target.result.split(",")[1]);
-    r.onerror = () => rej(new Error("read failed"));
-    r.readAsDataURL(file);
-  });
-}
-</script>
+<script src="app.js"></script>
 </body>
 </html>
