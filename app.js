@@ -1,9 +1,11 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
-
 // ========================================
-// Configuration & Domain Constants
+// FraudGuard · Main React Component
 // ========================================
 
+// Destructure hooks cleanly from the global React object available via CDN
+const { useState, useRef, useMemo, useCallback } = React;
+
+// Color constants
 const PINK = {
     50: "#FBEAF0",
     100: "#F4C0D1",
@@ -14,6 +16,7 @@ const PINK = {
     800: "#72243E",
 };
 
+// Tab configuration
 const TABS = [
     { id: "image", label: "Image scan", icon: "◈", desc: "Detect AI-generated images", hint: "Paste an image URL or upload a file" },
     { id: "text", label: "Text scan", icon: "❋", desc: "Detect AI-written content", hint: "Paste any text — article, caption, review..." },
@@ -28,10 +31,7 @@ const PLACEHOLDERS = {
     seller: "Paste seller profile — name, account age, ratings, reviews...\n\nExample: 'New seller, 2 days old. 1000+ items sold. All 5-star reviews.'",
 };
 
-// ========================================
-// Pure Utility Helpers
-// ========================================
-
+// Pure utility styling helpers
 const getVerdictStyle = (verdict = "") => {
     const v = verdict.toLowerCase();
     if (v.includes("fraud") || v.includes("ai-generated") || v.includes("ai-written")) {
@@ -52,27 +52,12 @@ const getRiskBarColor = (score) => {
     return "#639922";
 };
 
-// ========================================
-// Live API / Analysis Service Layer
-// ========================================
-
-/**
- * Isolated service function. Swapping mock data for a live 
- * fetch() or SDK integration requires changes only in this scope.
- */
+// Simulated Analytical Pipeline (Isolated for easy API migration later)
 const analyzeFraudSignals = async (tab, inputText, imageFile = null) => {
-    // Artificial latency simulation
     await new Promise(resolve => setTimeout(resolve, 1200));
 
-    // Fallback error-state simulation
-    if (inputText?.toLowerCase().includes("trigger_error_state")) {
-        throw new Error("API Failure");
-    }
-
-    // Dynamic analysis logic using random distributions bounded by real signals
     const isHighRisk = Math.random() > 0.5;
     const scoreModifier = Math.floor(Math.random() * 20);
-
     const baseResult = {
         confidence: 75 + Math.floor(Math.random() * 15),
         signals: ["Heuristic text profiling completed", "Cryptographic evaluation of payload verified"],
@@ -95,11 +80,8 @@ const analyzeFraudSignals = async (tab, inputText, imageFile = null) => {
     };
 };
 
-// ========================================
-// Main Component View
-// ========================================
-
-export const FraudGuard = () => {
+// Main Component
+const FraudGuard = () => {
     const [activeTab, setActiveTab] = useState("image");
     const [inputs, setInputs] = useState({ image: "", text: "", product: "", seller: "" });
     const [results, setResults] = useState({});
@@ -108,7 +90,7 @@ export const FraudGuard = () => {
     
     const fileInputRef = useRef(null);
 
-    // Dynamic computed tab attributes
+    // Memoized helpers
     const currentTab = useMemo(() => TABS.find((t) => t.id === activeTab), [activeTab]);
     const currentResult = results[activeTab];
     const isCurrentLoading = loading[activeTab];
@@ -119,7 +101,7 @@ export const FraudGuard = () => {
         return textHasLength || fileExists;
     }, [inputs, activeTab, imagePayload.file]);
 
-    // Cleanup object URLs when components alter or unmount to avoid memory leaks
+    // Memory-safe image tracking cleanup
     const clearImageState = useCallback(() => {
         if (imagePayload.previewUrl) {
             URL.revokeObjectURL(imagePayload.previewUrl);
@@ -132,7 +114,6 @@ export const FraudGuard = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Revoke prior reference if user overwrites an image before executing analysis
         if (imagePayload.previewUrl) URL.revokeObjectURL(imagePayload.previewUrl);
 
         setImagePayload({
@@ -166,7 +147,7 @@ export const FraudGuard = () => {
         } catch (error) {
             setResults(prev => ({ 
                 ...prev, 
-                [activeTab]: { error: true, summary: "Analysis transmission broken. Check platform configuration or key validation hooks." } 
+                [activeTab]: { error: true, summary: "Analysis transmission broken. Check platform configuration." } 
             }));
         } finally {
             setLoading(prev => ({ ...prev, [activeTab]: false }));
@@ -175,7 +156,7 @@ export const FraudGuard = () => {
 
     return (
         <div className="app-container">
-            {/* Header Structure */}
+            {/* Header */}
             <header className="header">
                 <div className="header-content">
                     <div className="logo-icon" aria-hidden="true">
@@ -202,7 +183,7 @@ export const FraudGuard = () => {
                 Using simulated detection — Add API gateway endpoint parameters for live deployments.
             </div>
 
-            {/* Accessible Tab Interface */}
+            {/* Tabs Navigation */}
             <nav className="tabs-container" role="tablist" aria-label="Fraud Detection Capabilities">
                 {TABS.map((tab) => (
                     <button
@@ -220,7 +201,7 @@ export const FraudGuard = () => {
                 ))}
             </nav>
 
-            {/* Input Dynamic Area */}
+            {/* Input Workspace */}
             <main 
                 id={`panel-${activeTab}`}
                 role="tabpanel" 
@@ -242,7 +223,6 @@ export const FraudGuard = () => {
                         ref={fileInputRef} 
                         type="file" 
                         accept="image/*" 
-                        className="sr-only"
                         style={{ display: "none" }} 
                         onChange={handleFileChange} 
                     />
@@ -282,7 +262,7 @@ export const FraudGuard = () => {
                 </div>
             </main>
 
-            {/* Context Loading Overlay */}
+            {/* Loading Overlay */}
             {isCurrentLoading && (
                 <div className="loading-container" aria-busy="true" aria-live="polite">
                     <div className="loading-label">ANALYZING</div>
@@ -292,7 +272,7 @@ export const FraudGuard = () => {
 
             {/* Results Ingestion Terminal */}
             {currentResult && !isCurrentLoading && (
-                <article className="result-card" aria-live="dominant">
+                <article className="result-card" aria-live="polite">
                     {currentResult.error ? (
                         <div className="error-display" style={{ padding: "1.25rem", color: "#A32D2D" }}>
                             {currentResult.summary}
@@ -351,7 +331,7 @@ export const FraudGuard = () => {
                 </article>
             )}
 
-            {/* Fallback Unused Frame */}
+            {/* Fallback Frame */}
             {!currentResult && !isCurrentLoading && (
                 <div className="empty-state" aria-hidden="true">
                     <div className="empty-icon">{currentTab.icon}</div>
@@ -361,3 +341,6 @@ export const FraudGuard = () => {
         </div>
     );
 };
+
+// Render the application matching your CDN pipeline context
+ReactDOM.createRoot(document.getElementById("root")).render(<FraudGuard />);
